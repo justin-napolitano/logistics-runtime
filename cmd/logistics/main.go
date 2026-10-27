@@ -31,6 +31,10 @@ func run(logger *slog.Logger) error {
 	if len(os.Args) > 1 {
 		command = os.Args[1]
 	}
+	mailCommands := map[string]bool{"mail-configure": true, "mail-status": true, "mail-authorize": true, "mail-sync": true, "mail-worker": true, "mail-reset": true, "mail-pause": true, "mail-resume": true}
+	if mailCommands[command] {
+		return runMailbox(logger, command, os.Args[2:])
+	}
 	if command == "basket-preview" {
 		return preview(os.Args[2:])
 	}
@@ -39,7 +43,7 @@ func run(logger *slog.Logger) error {
 	}
 	extra := map[string]bool{"save-template": true, "prepare-basket": true, "basket-export": true, "import-mail": true, "import-mail-dir": true, "orders": true, "mail-exceptions": true}
 	if command != "serve" && command != "migrate" && command != "import-proposals" && !extra[command] {
-		return errors.New("usage: logistics [serve|migrate|import-proposals|openapi|basket-preview|save-template|prepare-basket|basket-export|import-mail|import-mail-dir|orders|mail-exceptions]")
+		return errors.New("usage: logistics [serve|migrate|import-proposals|openapi|basket-preview|save-template|prepare-basket|basket-export|import-mail|import-mail-dir|orders|mail-exceptions|mail-configure|mail-authorize|mail-sync|mail-worker|mail-status|mail-pause|mail-resume|mail-reset]")
 	}
 	if command == "import-proposals" && len(os.Args) != 3 {
 		return errors.New("usage: logistics import-proposals CSV")

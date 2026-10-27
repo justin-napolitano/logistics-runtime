@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/justin-napolitano/logistics-runtime/internal/inventory"
+	"github.com/justin-napolitano/logistics-runtime/internal/mailsync"
 	"github.com/justin-napolitano/logistics-runtime/internal/ordermail"
 	"github.com/justin-napolitano/logistics-runtime/internal/shopping"
 )
@@ -35,6 +36,7 @@ type moduleOperation struct {
 }
 
 var shoppingOperations = []moduleOperation{
+	{"GET", "/v1/mail/sync-status", "Read mailbox sync freshness and redacted status, without tokens/cursors", nil, []mailsync.Status{}, (*API).syncStatus},
 	{"POST", "/v1/shopping/templates", "Save an immutable content-addressed shopping template", shopping.Template{}, shopping.SavedTemplate{}, (*API).saveTemplate},
 	{"GET", "/v1/shopping/templates/{id}", "Read a shopping template", nil, shopping.SavedTemplate{}, (*API).getTemplate},
 	{"POST", "/v1/shopping/baskets", "Prepare or return the saved proposal for a template/cycle", BasketRequest{}, shopping.Basket{}, (*API).prepareBasket},
@@ -279,4 +281,22 @@ func shoppingSpec(paths map[string]any) {
 		}
 		path[strings.ToLower(op.Method)] = entry
 	}
+}
+
+func (a *API) syncStatus(w http.ResponseWriter, r *http.Request) {
+	if len(r.URL.Query()) != 0 {
+		write(w, 400, map[string]string{"error": "no query parameters supported"})
+		return
+	}
+	store, ok := a.store.(mailsync.Store)
+	if !ok {
+		write(w, 503, map[string]string{"error": "mail sync storage unavailable"})
+		return
+	}
+	out, e := store.MailStatuses(r.Context())
+	if e != nil {
+		a.moduleFail(w, e)
+		return
+	}
+	write(w, 200, out)
 }

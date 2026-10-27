@@ -263,7 +263,7 @@ func TestShoppingRuntimePrivileges(t *testing.T) {
 			t.Error(err)
 		}
 	}()
-	_, e = conn.Exec(ctx, `GRANT USAGE ON SCHEMA logistics TO `+role+`; GRANT SELECT,INSERT ON logistics.shopping_templates,logistics.baskets,logistics.orders,logistics.order_reports TO `+role+`; GRANT SELECT,INSERT,UPDATE ON logistics.order_mail TO `+role)
+	_, e = conn.Exec(ctx, `GRANT USAGE ON SCHEMA logistics TO `+role+`; GRANT SELECT,INSERT ON logistics.shopping_templates,logistics.baskets,logistics.orders,logistics.order_reports TO `+role+`; GRANT SELECT,INSERT,UPDATE ON logistics.order_mail,logistics.mail_connections TO `+role)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -277,6 +277,12 @@ func TestShoppingRuntimePrivileges(t *testing.T) {
 	}
 	if _, e = tx.Exec(ctx, `SELECT id FROM logistics.order_mail LIMIT 1 FOR UPDATE`); e != nil {
 		t.Fatal("runtime cannot lock mail evidence", e)
+	}
+	if _, e = tx.Exec(ctx, `INSERT INTO logistics.mail_connections(id,config) VALUES($1,'{}') ON CONFLICT(id) DO UPDATE SET progress='{"status":"paused"}' RETURNING config`, name); e != nil {
+		t.Fatal("runtime cannot configure or checkpoint mailbox", e)
+	}
+	if _, e = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, name); e != nil {
+		t.Fatal("runtime cannot acquire advisory lock", e)
 	}
 	var canDDL, canDelete, canRewriteTemplate bool
 	if e = tx.QueryRow(ctx, `SELECT has_schema_privilege(current_user,'logistics','CREATE'),has_table_privilege(current_user,'logistics.order_mail','DELETE'),has_table_privilege(current_user,'logistics.shopping_templates','UPDATE')`).Scan(&canDDL, &canDelete, &canRewriteTemplate); e != nil {

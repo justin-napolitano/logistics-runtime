@@ -1,7 +1,7 @@
 # Logistics runtime
 
 Go/PostgreSQL inventory comparisons, reusable shopping proposals and offline email
-order reports. This export contains application code and fabricated fixtures only.
+order reports, with read-only Gmail and Outlook sync workers. This export contains application code and fabricated fixtures only.
 It has no original repository history, personal inventory, order data, owner-specific
 shopping template, deployment credentials or private planning issues.
 
@@ -13,7 +13,7 @@ bin/logistics basket-preview examples/templates/sample-restock.json sample /tmp/
 ```
 
 The HTML file is a shopping proposal with product links, not a merchant cart or
-purchase. Live merchant and mailbox integrations are not implemented. All data API
+purchase. Merchant purchasing is not implemented. All data API
 routes require a bearer token. Private instances should remain private even when
 application source code is public.
 
@@ -37,12 +37,14 @@ command; serving and imports never run DDL. Never run CI fixtures on a real data
 - `basket-preview`: private standalone export with no database required.
 - `import-mail`, `import-mail-dir`: bounded, deduplicated offline .eml evidence import.
 - `orders`, `mail-exceptions`: partial chronological reports and unsupported messages.
+- `mail-configure`, `mail-authorize`, `mail-sync`, `mail-worker`, `mail-status`: mailbox setup, OAuth and scheduled ingestion. See [mailbox setup](docs/mailbox-sync.md).
+- `mail-pause`, `mail-resume`, `mail-reset`: worker controls and bounded replay.
 - `serve`, `migrate`, `import-proposals`, `openapi`: inventory and application operations.
 
 Email reports are explicitly unverified. No raw message bodies are persisted,
 no email links are fetched, and delivered reports never change physical stock.
-Mailbox OAuth/sync, actual merchant email-format validation, purchasing, public
-browser sessions and cloud deployment remain outside this implementation.
+Provider calls and OAuth are tested against synthetic transports; live account and
+merchant email-format validation, purchasing and cloud deployment remain pending.
 
 Public source code does not grant an open-source license; no license has been
 selected. Personal inventory, actual mail and deployment data belong outside this
