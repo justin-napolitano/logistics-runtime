@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.tools/
+node_modules/
+dist/
+coverage/
+bin/
+coverage.out
+.DS_Store

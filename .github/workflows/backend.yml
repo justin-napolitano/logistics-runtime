@@ -1,0 +1,49 @@
+name: Runtime verification
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18.6@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6
+        env:
+          POSTGRES_DB: logistics_test
+          POSTGRES_USER: logistics_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 127.0.0.1:55439:5432
+        options: >-
+          --health-cmd "pg_isready -U logistics_test -d logistics_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://logistics_test@127.0.0.1:55439/logistics_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+      - name: Verify locked dependencies
+        run: |
+          go mod download
+          go mod verify
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+      - name: Formatting and vet
+        run: |
+          test -z "$(gofmt -l cmd internal)"
+          go vet ./...
+      - name: Unit and PostgreSQL integration tests
+        run: go test -race ./...
+      - name: Dependency vulnerabilities
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+      - name: Build and check generated API contract
+        run: |
+          go build -trimpath -o bin/logistics ./cmd/logistics
+          bin/logistics openapi > /tmp/openapi.json
+          diff docs/openapi.json /tmp/openapi.json

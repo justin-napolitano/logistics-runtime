@@ -1,0 +1,9 @@
+From: auto-confirm@amazon.com
+To: synthetic@example.invalid
+Date: Mon, 26 Oct 2026 10:00:00 +0000
+Message-ID: <synthetic-confirmation@example.invalid>
+Subject: Your Amazon Fresh order
+Content-Type: text/plain; charset=utf-8
+
+Order 111-1234567-1234567
+Order total: $25.42

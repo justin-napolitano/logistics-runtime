@@ -1,0 +1,15 @@
+{
+  "name": "Synthetic shopping proposal",
+  "lines": [
+    {
+      "id": "sample",
+      "name": "Example product \u2014 select exact variant",
+      "merchant": "amazon_fresh",
+      "product_url": "",
+      "package": "one package",
+      "basis": "planned_packages",
+      "planned_packages": 2,
+      "review_note": "Fabricated example; no product or actual stock selected."
+    }
+  ]
+}
