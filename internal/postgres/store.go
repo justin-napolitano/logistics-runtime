@@ -53,8 +53,18 @@ func (s *Store) Migrate(ctx context.Context) error {
 	if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(681334218)`); err != nil {
 		return err
 	}
-	if _, err = tx.Exec(ctx, `CREATE SCHEMA IF NOT EXISTS logistics;
-	 CREATE TABLE IF NOT EXISTS logistics.schema_migrations(name text PRIMARY KEY, checksum text NOT NULL)`); err != nil {
+	// CREATE SCHEMA IF NOT EXISTS still requires database-wide CREATE, even when
+	// the schema exists. A pre-provisioned schema owner needs only its own schema.
+	var schemaExists bool
+	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname='logistics')`).Scan(&schemaExists); err != nil {
+		return err
+	}
+	if !schemaExists {
+		if _, err = tx.Exec(ctx, `CREATE SCHEMA logistics`); err != nil {
+			return err
+		}
+	}
+	if _, err = tx.Exec(ctx, `CREATE TABLE IF NOT EXISTS logistics.schema_migrations(name text PRIMARY KEY, checksum text NOT NULL)`); err != nil {
 		return err
 	}
 	files, err := fs.Glob(migrations, "migrations/*.sql")
