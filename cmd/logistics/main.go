@@ -31,6 +31,11 @@ func run(logger *slog.Logger) error {
 	if len(os.Args) > 1 {
 		command = os.Args[1]
 	}
+	if command != "openapi" && command != "basket-preview" {
+		if err := loadRuntimeSecrets(); err != nil {
+			return err
+		}
+	}
 	mailCommands := map[string]bool{"mail-configure": true, "mail-status": true, "mail-authorize": true, "mail-sync": true, "mail-worker": true, "mail-reset": true, "mail-pause": true, "mail-resume": true}
 	if mailCommands[command] {
 		return runMailbox(logger, command, os.Args[2:])

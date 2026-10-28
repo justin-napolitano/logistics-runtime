@@ -47,3 +47,9 @@ jobs:
           go build -trimpath -o bin/logistics ./cmd/logistics
           bin/logistics openapi > /tmp/openapi.json
           diff docs/openapi.json /tmp/openapi.json
+      - name: Verify non-root container and API contract
+        run: |
+          docker build --build-arg REVISION="$GITHUB_SHA" -t logistics-runtime:ci .
+          test "$(docker inspect --format='{{.Config.User}}' logistics-runtime:ci)" = '65532:65532'
+          docker run --rm --read-only --cap-drop ALL --security-opt no-new-privileges --network none logistics-runtime:ci openapi > /tmp/container-openapi.json
+          diff docs/openapi.json /tmp/container-openapi.json

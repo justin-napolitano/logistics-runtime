@@ -26,11 +26,19 @@ PostgreSQL database. Live account validation and deployment are separate steps.
    production use can require provider verification. Organizational consent policy
    can also require an administrator.
 4. Inject app credentials and Infisical bootstrap credentials securely. Set
+   `INFISICAL_URL` to the actual HTTPS instance origin (default US Cloud:
+   `https://app.infisical.com`, without `/api`). Set
    `INFISICAL_PROJECT_ID`, `INFISICAL_ENVIRONMENT`, `INFISICAL_SECRET_PATH` and
    `INFISICAL_UNIVERSAL_AUTH_CLIENT_ID` / `INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET`.
    Scope that machine identity to read/create/update secrets in a dedicated folder.
    The worker renews machine access tokens automatically. `INFISICAL_TOKEN` is an
    alternative for short-lived jobs and is not renewed. Never put credentials in Git.
+   On Cloud Run prefer `INFISICAL_GCP_IDENTITY_ID` instead: the worker exchanges
+   the platform's Google-signed identity token for scoped Infisical access, without
+   a downloaded Google key or Universal Auth secret. Configure the Infisical identity
+   to allow only the logistics runtime service account. Select exactly one auth
+   mode; mixed or partial credentials are rejected. The existing task-service
+   identity and its permissions remain separate.
 5. Copy an example below to a private `*.connection.json`, change its date and IDs,
    then run `mail-configure`. `account` is the logical merchant-account namespace,
    not an email address; use the same value across sources only when intentionally
@@ -118,3 +126,38 @@ Email headers and order reports remain unverified, even after provider OAuth.
 - [Outlook message delta](https://learn.microsoft.com/en-us/graph/delta-query-messages)
 - [Microsoft authorization code flow](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow)
 - [Infisical v4 secrets](https://infisical.com/docs/api-reference/endpoints/secrets/read)
+- [Infisical GCP identity auth](https://infisical.com/docs/documentation/platform/identities/gcp-auth)
+
+## Container deployment
+
+The pinned, non-root Dockerfile builds the same CLI used locally. Build once with
+the tested commit as `REVISION`, then deploy an immutable image digest. Container
+build context excludes Git history, local configuration, credentials and fixtures.
+No real operational data belongs in the image.
+
+```sh
+docker build --platform linux/amd64 --build-arg REVISION=TESTED_COMMIT -t logistics-runtime:TESTED_COMMIT .
+docker run --rm --read-only --cap-drop ALL --security-opt no-new-privileges --network none logistics-runtime:TESTED_COMMIT openapi
+```
+
+For hosted execution set non-secret Infisical location/identity fields and
+`INFISICAL_BOOTSTRAP_SECRETS=DATABASE_URL,MAIL_GOOGLE_CLIENT_ID,MAIL_GOOGLE_CLIENT_SECRET`
+(use Microsoft names for Outlook). Each named secret is loaded from the scoped
+folder into the process environment before database/provider initialization. Set
+`INFISICAL_CONFIG_PATH` to a separate read-only configuration folder; keep
+`INFISICAL_SECRET_PATH` scoped to writable mailbox-token secrets. When omitted,
+configuration reads use the token folder for compatibility. For
+an API deployment include `API_TOKEN`; for a migration job bootstrap only
+`DATABASE_URL` from a separate migration-only identity/folder. Unknown or duplicate
+bootstrap names fail before any secret access. Do not grant the worker migration
+credentials, schema ownership or broad project secret access.
+
+Use `mail-sync -timeout 5m -max-pages 20 CONNECTION_ID` as a bounded Cloud Run Job,
+one task/parallelism 1 and no platform retries. Cloud Scheduler can invoke it every
+15 minutes through a dedicated job-scoped invoker identity. Start with the schedule
+paused until the limited live-mail acceptance test passes. Configure job-failure
+and missing-execution alerts with an actual notification channel before activation.
+An always-running `mail-worker` is not appropriate for a request-throttled,
+scale-to-zero HTTP service. Environment-specific resources, shared PostgreSQL
+placement, grants and deployment records belong in the private infrastructure
+repository; this image does not provision them.
