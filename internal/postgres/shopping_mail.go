@@ -192,7 +192,7 @@ func (s *Store) MailExceptions(ctx context.Context, limit, offset int) ([]orderm
 // ShoppingReady is checked separately from inventory readiness because old
 // installations must explicitly apply the new migrations before these operations.
 func (s *Store) ShoppingReady(ctx context.Context) error {
-	_, err := s.pool.Exec(ctx, `SELECT t.id,b.id,m.id,o.id,r.id FROM logistics.shopping_templates t, logistics.baskets b, logistics.order_mail m, logistics.orders o, logistics.order_reports r LIMIT 0`)
+	_, err := s.pool.Exec(ctx, `SELECT t.id,b.id,m.id,o.id,r.id,c.id FROM logistics.shopping_templates t, logistics.baskets b, logistics.order_mail m, logistics.orders o, logistics.order_reports r, logistics.mail_connections c LIMIT 0`)
 	return err
 }
 
