@@ -17,3 +17,11 @@ in PostgreSQL. Status responses omit both. Provider redirects are disabled.
 Sender headers only route parsing; they do not authenticate a merchant. Unsupported
 formats remain exceptions and cannot change inventory. Do not expose the database
 or grant untrusted users connection-configuration access.
+
+Cloud Run can exchange a Google metadata identity token for scoped Infisical
+access; restrict the Infisical identity to the dedicated runtime service account.
+Configuration secrets can be bootstrapped by an explicit setting-name allowlist.
+Use separate read-only configuration and writable OAuth-token folders; the worker
+must not read migration credentials. Auth modes are mutually exclusive, and the
+configured Infisical origin must be HTTPS without userinfo, query or path.
+The distroless container runs as numeric non-root with an allowlisted build context.

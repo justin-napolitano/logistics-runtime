@@ -30,7 +30,7 @@ func oauthConfig(provider string) (oauth2.Config, error) {
 	return mailauth.Config(provider, os.Getenv("MAIL_MICROSOFT_CLIENT_ID"), os.Getenv("MAIL_MICROSOFT_CLIENT_SECRET"), os.Getenv("MAIL_MICROSOFT_TENANT"))
 }
 func tokenStore() *mailauth.Infisical {
-	return &mailauth.Infisical{ProjectID: os.Getenv("INFISICAL_PROJECT_ID"), Environment: os.Getenv("INFISICAL_ENVIRONMENT"), Path: os.Getenv("INFISICAL_SECRET_PATH"), Token: os.Getenv("INFISICAL_TOKEN"), UniversalClientID: os.Getenv("INFISICAL_UNIVERSAL_AUTH_CLIENT_ID"), UniversalClientSecret: os.Getenv("INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET")}
+	return &mailauth.Infisical{URL: os.Getenv("INFISICAL_URL"), ProjectID: os.Getenv("INFISICAL_PROJECT_ID"), Environment: os.Getenv("INFISICAL_ENVIRONMENT"), Path: os.Getenv("INFISICAL_SECRET_PATH"), Token: os.Getenv("INFISICAL_TOKEN"), UniversalClientID: os.Getenv("INFISICAL_UNIVERSAL_AUTH_CLIENT_ID"), UniversalClientSecret: os.Getenv("INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET"), GCPIdentityID: os.Getenv("INFISICAL_GCP_IDENTITY_ID")}
 }
 func providerWithToken(c mailsync.Connection, access mailsync.AccessToken) mailsync.Provider {
 	api := mailsync.NewAPI(nil, access)

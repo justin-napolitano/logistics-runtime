@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/justin-napolitano/logistics-runtime/internal/httpapi"
 	"github.com/justin-napolitano/logistics-runtime/internal/inventory"
 	"github.com/justin-napolitano/logistics-runtime/internal/mailsync"
@@ -25,6 +27,71 @@ type persistedProvider struct{ fail bool }
 
 func (p persistedProvider) Identity(context.Context) (string, error) {
 	return "synthetic-mailbox-id", nil
+}
+
+func TestMailboxWorkerWithoutInventoryOrDDLGrants(t *testing.T) {
+	dsn := os.Getenv("TEST_DATABASE_URL")
+	if dsn == "" {
+		t.Skip("dedicated logistics_test database required")
+	}
+	u, err := url.Parse(dsn)
+	if err != nil || u.Path != "/logistics_test" {
+		t.Fatal("dedicated test database required")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	admin, err := postgres.Open(ctx, dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer admin.Close()
+	if err = admin.Migrate(ctx); err != nil {
+		t.Fatal(err)
+	}
+	conn, err := pgx.Connect(ctx, dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close(ctx)
+	suffix := fmt.Sprint(time.Now().UnixNano())
+	name := "mail_worker_" + suffix
+	role := pgx.Identifier{name}.Sanitize()
+	if _, err = conn.Exec(ctx, `CREATE ROLE `+role+` LOGIN`); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		_, _ = conn.Exec(ctx, `DROP OWNED BY `+role)
+		if _, err := conn.Exec(ctx, `DROP ROLE `+role); err != nil {
+			t.Error(err)
+		}
+	}()
+	if _, err = conn.Exec(ctx, `GRANT USAGE ON SCHEMA logistics TO `+role+`; GRANT SELECT,INSERT ON logistics.orders,logistics.order_reports TO `+role+`; GRANT SELECT,INSERT,UPDATE ON logistics.order_mail,logistics.mail_connections TO `+role); err != nil {
+		t.Fatal(err)
+	}
+	// The isolated synthetic test server uses trust auth; no real login or password.
+	u.User = url.User(name)
+	worker, err := postgres.Open(ctx, u.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer worker.Close()
+	c := mailsync.Connection{ID: "scoped." + suffix, Provider: "gmail", Account: "scoped." + suffix, CredentialRef: "SCOPED_" + suffix, Since: time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)}
+	if err = worker.ConfigureMail(ctx, c); err != nil {
+		t.Fatal("scoped configure failed", err)
+	}
+	status, err := (mailsync.Runner{Store: worker}).Run(ctx, c.ID, func(mailsync.Connection) (mailsync.Provider, error) { return persistedProvider{}, nil })
+	if err != nil || status.State != "ready" {
+		t.Fatal("scoped sync failed", status, err)
+	}
+	if _, err = worker.Order(ctx, ordermail.OrderID(c.Account, "111-1234567-1234567")); err != nil {
+		t.Fatal("scoped evidence unavailable", err)
+	}
+	if err = worker.Ready(ctx); err == nil {
+		t.Fatal("mail worker can access inventory")
+	}
+	if err = worker.Migrate(ctx); err == nil {
+		t.Fatal("mail worker can migrate schema")
+	}
 }
 func (p persistedProvider) Page(_ context.Context, _ mailsync.Connection, c mailsync.Cursor) (mailsync.Page, error) {
 	return mailsync.Page{IDs: []string{"one", "two"}, Next: mailsync.Cursor{Phase: "complete"}, Complete: true}, nil

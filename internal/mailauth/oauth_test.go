@@ -115,7 +115,7 @@ func TestInfisicalReadAndWrite(t *testing.T) {
 	methods := []string{}
 	store := &Infisical{ProjectID: "synthetic-project", Environment: "dev", Path: "/mail", Token: "synthetic-machine-token", Client: &http.Client{Transport: transport(func(r *http.Request) (*http.Response, error) {
 		methods = append(methods, r.Method)
-		if r.URL.Host != "us.infisical.com" || r.Header.Get("Authorization") != "Bearer synthetic-machine-token" {
+		if r.URL.Host != "app.infisical.com" || r.Header.Get("Authorization") != "Bearer synthetic-machine-token" {
 			t.Fatal("wrong secret host or scope")
 		}
 		switch r.Method {

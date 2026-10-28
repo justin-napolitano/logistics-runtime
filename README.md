@@ -31,6 +31,11 @@ PostgreSQL integration tests require TEST_DATABASE_URL pointing to a dedicated
 database tests explicitly skip. Migrations run only via the explicit `migrate`
 command; serving and imports never run DDL. Never run CI fixtures on a real database.
 
+A pinned non-root Dockerfile packages the CLI for Cloud Run Jobs or a private API.
+See [deployment and secret setup](docs/mailbox-sync.md#container-deployment).
+Container CI verifies the user and generated API with a read-only filesystem and
+network disabled. Hosted resources and operational data stay outside this repository.
+
 ## Implemented commands
 
 - `save-template`, `prepare-basket`, `basket-export`: immutable saved shopping proposals.
