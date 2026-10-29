@@ -7,7 +7,12 @@ Email input is untrusted, bounded and parsed without network or model calls. Rep
 are not authenticated proof of purchase or accepted physical receipts. Product links
 are allowlisted but not fetched. A basket is not spending authorization. Hosted TLS,
 private access, scoped runtime grants, secrets and backups need deployment-specific
-configuration. No live merchant integration or cloud deployment is included.
+configuration. No cloud deployment is included. The optional Python shopping
+worker uses a private, dedicated local browser profile and explicit manifests.
+Treat its profile as account credentials; keep it and cart journals outside Git.
+It prepares carts only, with manual checkout and no purchase submission. Live
+merchant mutation has not yet been verified. It does not authenticate order
+reports or establish physical inventory; see tools/shop/README.md for limits.
 
 Mailbox access uses delegated read-only OAuth with PKCE/state validation and a
 loopback callback. Permissions cover the mailbox; sender, date and folder filters

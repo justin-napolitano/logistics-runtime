@@ -1,0 +1,19 @@
+[project]
+name = "portfolio-shop"
+version = "0.1.0"
+description = "Local, deterministic Amazon cart preparation; manual checkout only"
+requires-python = ">=3.11"
+dependencies = ["playwright>=1.56,<2"]
+
+[project.scripts]
+shop = "portfolio_shop.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

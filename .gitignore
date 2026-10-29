@@ -12,3 +12,10 @@ coverage.out
 .DS_Store
 *.connection.json
 oauth-token*.json
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+.shop/
+playwright-report/
+test-results/
