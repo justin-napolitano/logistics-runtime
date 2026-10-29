@@ -33,7 +33,8 @@ def merchant():
             elif url.startswith("https://www.amazon.com/cart/localmarket?"):
                 rows = "".join(
                     f'<div data-itemtype="active" data-asin="{asin}">'
-                    f'<a class="sc-product-link" href="/dp/{asin}">{html.escape(state["title"] if asin == "B000TEST01" else "Other product")}</a>'
+                    '<a class="sc-product-link sc-removed-msg-title"></a>'
+                    f'<a class="sc-product-link sc-product-title" href="/dp/{asin}">{html.escape(state["title"] if asin == "B000TEST01" else "Other product")}</a>'
                     f'<button role="combobox" aria-label="{q}. Click to change quantity">{q}</button></div>'
                     for asin, q in state["fresh"].items()
                 )

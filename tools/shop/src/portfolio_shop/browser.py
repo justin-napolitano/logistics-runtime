@@ -69,7 +69,9 @@ class Amazon:
             if not re.fullmatch(r"[A-Z0-9]{10}", asin):
                 raise Blocked("Cart row has no recognized ASIN")
             if fresh:
-                title = row.locator("a.sc-product-link:visible").first.inner_text().strip()
+                # Fresh includes empty/removed-message product links before the
+                # actual title. Never mistake those for a missing product title.
+                title = row.locator("a.sc-product-link.sc-product-title:visible").inner_text().strip()
                 quantity = row.locator('button[role="combobox"]:visible')
                 label = quantity.get_attribute("aria-label") if quantity.count() == 1 else ""
                 match = re.fullmatch(r"(\d+)\. Click to change quantity", label or "")
