@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "channel": "amazon",
+  "items": [
+    {
+      "asin": "B000TEST01",
+      "quantity": 2,
+      "title_contains": ["Example Brand", "Plain Crackers", "8 oz"],
+      "forbidden_title": ["Mini", "Subscription"]
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 # Logistics runtime
 
+An optional [portable Python shopping worker](tools/shop/README.md) provides local
+browser login, explicit cart preparation and manual checkout. Its live mutation
+flow has not yet been verified; it does not submit purchases or change inventory.
+
 Go/PostgreSQL inventory comparisons, reusable shopping proposals and offline email
 order reports, with read-only Gmail and Outlook sync workers. This export contains application code and fabricated fixtures only.
 It has no original repository history, personal inventory, order data, owner-specific
