@@ -45,7 +45,9 @@ class Amazon:
             raise Blocked("Unexpected merchant origin")
         if "/ap/" in parsed.path or self.page.locator('input[type="password"]').count():
             raise Blocked("Sign-in required: run shop login")
-        if self.page.locator('#captchacharacters, form[action*="validateCaptcha"]').count():
+        if parsed.path.startswith("/checkpoint/") or self.page.locator(
+            '#captchacharacters, form[action*="validateCaptcha"]'
+        ).count():
             raise Blocked("Amazon requires human verification: run shop login")
 
     def cart(self) -> list[CartRow]:

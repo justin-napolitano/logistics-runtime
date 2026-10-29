@@ -123,6 +123,18 @@ def test_unknown_cart_is_not_empty(merchant):
         amazon.cart()
 
 
+def test_checkpoint_stops_without_clicking_human_verification(merchant):
+    amazon, state = merchant
+    amazon.page.route("**/checkpoint/continue", lambda r: r.fulfill(
+        content_type="text/html", body='<h1>Check the box to continue</h1>'
+        '<input type="checkbox" aria-label="I am human" onclick="throw new Error(\'Must be manual\')">',
+    ))
+    with pytest.raises(Blocked, match="human verification"):
+        amazon.navigate("https://www.amazon.com/checkpoint/continue")
+    assert state["adds"] == 0
+    assert state["fresh_adds"] == 0
+
+
 def test_fresh_browser_prepare_and_replay_preserves_both_carts(merchant, tmp_path):
     amazon, state = merchant
     amazon.channel = "fresh"
